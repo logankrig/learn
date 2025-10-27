@@ -1,0 +1,767 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Home</title>
+<link rel="icon" href="https://ssl.gstatic.com/classroom/favicon.png">
+<meta name="theme-color" content="#0b1220">
+
+<!-- Tailwind CDN (optional) -->
+<script src="https://cdn.tailwindcss.com" defer></script>
+
+<style>
+/* =========================
+   Root variables & base
+   ========================= */
+/* DEFAULT ACCENT: RED GRADIENT (user requested) */
+:root{
+  --bg-a: #071029;
+  --bg-b: #0f2a44;
+  --bg-c: #1e3450;
+
+  --glass-bg: rgba(255,255,255,0.04);
+  --glass-border: rgba(255,255,255,0.06);
+  --muted: rgba(255,255,255,0.7);
+  /* Default accent: red gradient */
+  --accent-start: #ff0000;
+  --accent-mid:   #ff3b3b;
+  --accent-end:   #b30000;
+  --accent-glow: rgba(255,60,60,0.88);
+
+  --panel-elev: rgba(2,6,23,0.6);
+  --text: #eaf2ff;
+  --toggle-bg: rgba(255,255,255,0.08);
+  --tab-width: 64px;
+
+  /* small helpers for dropdown placement — tweak if topbar layout changes */
+  --topbar-gap: 20px;
+  --topbar-height: 88px;
+}
+
+/* Theme variations */
+html.theme-frost {
+  --bg-a: #071029; --bg-b:#0f2a44; --bg-c:#1e3450;
+  --glass-bg: rgba(255,255,255,0.04);
+  --glass-border: rgba(255,255,255,0.06);
+  --text:#eaf2ff;
+  --accent-glow: rgba(255,60,60,0.88);
+}
+html.theme-neon {
+  --bg-a: #05060a; --bg-b:#061226; --bg-c:#0b1a2c;
+  --glass-bg: rgba(255,255,255,0.02);
+  --glass-border: rgba(255,255,255,0.04);
+  --text:#f2f8ff;
+  --accent-glow: rgba(255,90,120,0.95);
+  --panel-elev: rgba(0,0,0,0.7);
+}
+
+/* Base */
+*{box-sizing:border-box}
+html,body{height:100%;width:100%;margin:0;padding:0;font-family:Inter, 'Segoe UI', Roboto, system-ui, -apple-system, 'Helvetica Neue', Arial; background:linear-gradient(120deg,var(--bg-a),var(--bg-b),var(--bg-c)); background-size:400% 400%; color:var(--text); overflow:hidden}
+@keyframes bgShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+body{animation:bgShift 36s linear infinite}
+
+/* iframe (original preserved) */
+iframe#mainIframe{position:fixed;inset:0;width:100vw;height:100vh;border:0;background:#060606;z-index:0;transition:opacity .36s cubic-bezier(.2,.9,.2,1)}
+
+/* Topbar container */
+#topbar-container{position:fixed;left:50%;top:var(--topbar-gap);transform:translateX(-50%);z-index:90;display:flex;flex-direction:column;align-items:center;gap:12px;transition:transform .45s,opacity .32s}
+#clock-digital{font-weight:700;font-family:monospace;padding:8px 14px;border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));backdrop-filter:blur(12px);border:1px solid var(--glass-border);box-shadow:0 8px 20px var(--panel-elev);cursor:pointer;user-select:none;white-space:nowrap;transition:transform .18s ease,background .18s}
+#clock-digital:hover{transform:scale(1.03)}
+#clock-digital .seconds{opacity:0;margin-left:8px;transition:opacity .25s, transform .25s}
+#clock-digital:hover .seconds{opacity:1;transform:scale(1.08)}
+
+/* topbar (tabs) */
+#topbar{display:flex;align-items:center;gap:16px;padding:12px 18px;border-radius:24px;background:var(--glass-bg);backdrop-filter:blur(18px) saturate(140%);border:1px solid var(--glass-border);box-shadow:0 14px 36px var(--panel-elev);transition:all .35s;transform-origin:center top}
+.topbar-hidden{opacity:0;transform:translateY(-26px) scale(.998);pointer-events:none}
+
+/* Tabs */
+#tabs{display:flex;gap:14px;align-items:center;position:relative}
+.tab-btn{width:var(--tab-width);height:64px;border-radius:16px;border:none;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));box-shadow:0 8px 22px rgba(0,0,0,0.28);transition:transform .28s,box-shadow .28s,filter .28s;position:relative;overflow:hidden;cursor:pointer}
+.tab-btn img{width:36px;height:36px;pointer-events:none}
+.tab-btn:hover{transform:translateY(-6px) rotate(-1deg) scale(1.04);box-shadow:0 22px 50px rgba(0,0,0,0.5);filter:brightness(1.03)}
+.tab-btn.active{transform:scale(1.06);box-shadow:0 28px 70px rgba(0,0,0,0.6)}
+
+/* animated underline gradient & flow (RED default) */
+@keyframes accentFlow {0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.tab-btn::after{content:'';position:absolute;bottom:0;left:0;width:100%;height:6px;
+  background:linear-gradient(90deg,var(--accent-start),var(--accent-mid),var(--accent-end));
+  background-size:300% 300%;animation:accentFlow 4.5s linear infinite;box-shadow:0 0 18px var(--accent-glow);
+  transform-origin:left;transform:scaleX(0);opacity:0;transition:transform .32s,opacity .22s}
+.tab-btn:hover::after{transform:scaleX(1);opacity:.6}
+.tab-btn.active::after{transform:scaleX(1);opacity:1}
+
+/* pulse animation when loading */
+@keyframes underlinePulse{0%{transform:translateY(0);filter:drop-shadow(0 0 6px rgba(255,60,60,.08))}50%{transform:translateY(-3px);filter:drop-shadow(0 0 28px rgba(255,60,60,.18))}100%{transform:translateY(0);filter:drop-shadow(0 0 6px rgba(255,60,60,.08))}}
+.tab-btn.underline-pulse::after{animation:accentFlow 4.5s linear infinite, underlinePulse 1.6s ease-in-out infinite;opacity:1}
+
+/* =========================
+   dropdown (anchored under duck tab)
+   ========================= */
+.dropdown{position:relative;display:inline-block}
+
+/* SMOOTH DROPDOWN ANIMATION */
+@keyframes dropdownEnter {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(0.96); }
+  60% { opacity: 1; transform: translateX(-50%) translateY(2px) scale(1.02); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+@keyframes dropdownExit {
+  0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(0.96); }
+}
+
+.dropdown .dropdown-panel{
+  position: fixed !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  top: calc(var(--topbar-gap) + var(--topbar-height) + 6px) !important;
+  min-width: 120px;
+  background: linear-gradient(180deg, rgba(20,20,20,0.96), rgba(34,34,34,0.96));
+  border-radius: 14px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+  box-shadow: 0 18px 46px rgba(0,0,0,0.6);
+  backdrop-filter: blur(12px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  border: 1px solid rgba(255,255,255,0.04);
+  z-index: 9999;
+  transform-origin: top center;
+  animation: dropdownExit 0.25s ease forwards;
+}
+
+/* visible state with entrance animation */
+.dropdown .dropdown-panel.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  animation: dropdownEnter 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* button styles inside dropdown */
+.dropdown .dropdown-panel button{
+  width:100%;
+  height:46px;
+  border-radius:10px;
+  background:linear-gradient(145deg,#3a3a3a,#282828);
+  border:none;
+  color:#fff;
+  font-weight:700;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px;
+  transition: background 0.25s, transform 0.25s;
+}
+.dropdown .dropdown-panel button:hover {
+  background:linear-gradient(145deg,#ff3b3b,#b30000);
+  transform: scale(1.04);
+}
+
+/* =========================
+   settings gear aligned with topbar
+   ========================= */
+#settings-gear{position:fixed;right:28px;top:calc(var(--topbar-gap) + 14px);z-index:95;width:56px;height:56px;border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));border:1px solid var(--glass-border);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 18px 46px var(--panel-elev);backdrop-filter:blur(10px);transition:transform .28s,box-shadow .28s}
+#settings-gear:hover{transform:rotate(10deg) scale(1.03)}
+#settings-gear img{width:28px;height:28px}
+
+/* settings panel */
+#settings-panel{position:fixed;right:12px;top:calc(var(--topbar-gap) + var(--topbar-height) + 8px);width:460px;max-height:calc(100vh - 132px);overflow:auto;z-index:96;border-radius:16px;padding:14px;color:var(--text);background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid var(--glass-border);backdrop-filter:blur(18px) saturate(120%);box-shadow:0 24px 72px var(--panel-elev);transform-origin:right top;transform:translateX(8px) translateY(6px) scale(.995);opacity:0;pointer-events:none;transition:all .32s}
+#settings-panel.show{transform:none;opacity:1;pointer-events:auto}
+#settings-panel h3{margin:0 0 8px 0;font-size:16px}
+
+/* settings content */
+.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.small-note{font-size:12px;color:rgba(255,255,255,0.72)}
+.presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.swatch{width:46px;height:46px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,0.45);transition:transform .14s}
+.swatch:hover{transform:translateY(-6px) scale(1.06)}
+.custom-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.script-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.script-row input[type="text"]{flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:var(--text);outline:none}
+.small-btn{padding:8px 10px;border-radius:8px;border:none;background:linear-gradient(90deg,#2b2b2b,#1f1f1f);color:#fff;cursor:pointer}
+.small-btn.primary{background:linear-gradient(90deg,#ff6b6b,#ff9a9a);color:#fff;font-weight:700}
+
+/* toggle switch styling (accessible) */
+.toggle-inline{display:flex;align-items:center;gap:8px}
+.toggle-input{position:absolute;opacity:0;pointer-events:auto}
+.toggle-label{position:relative;display:inline-flex;width:48px;height:26px;border-radius:999px;background:#6b6b6b;padding:3px;cursor:pointer;transition:background .2s}
+.toggle-label::before{content:'';width:20px;height:20px;border-radius:50%;background:#fff;display:block;transition:transform .22s;transform:translateX(0)}
+.toggle-input:checked + .toggle-label{background:linear-gradient(90deg,var(--accent-mid),var(--accent-end))}
+.toggle-input:checked + .toggle-label::before{transform:translateX(22px)}
+
+/* force area & console */
+#forceArea{width:100%;min-height:110px;border-radius:10px;padding:10px;border:1px solid rgba(255,255,255,0.03);background:linear-gradient(180deg, rgba(0,0,0,0.18), rgba(255,255,255,0.01));color:var(--text);font-family:monospace;font-size:13px;resize:vertical}
+#log-toolbar{display:flex;gap:8px;align-items:center;margin-top:10px;margin-bottom:8px}
+.filter-btn{padding:6px 8px;border-radius:999px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:#fff;cursor:pointer}
+.filter-btn.active{background:rgba(255,255,255,0.06);font-weight:700}
+#exportLogs{padding:6px 10px;border-radius:8px;border:none;background:linear-gradient(90deg,#ef4444,#fb7185);cursor:pointer;color:#fff}
+#logPanel{max-height:280px;overflow:auto;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(0,0,0,0.22), rgba(0,0,0,0.14));border:1px solid rgba(255,255,255,0.03);font-family:monospace;font-size:13px}
+.log-line{padding:8px;border-bottom:1px solid rgba(255,255,255,0.02)}
+.log-line.log{color:#ffecec}
+.log-line.warn{color:#ffd8a8}
+.log-line.err{color:#ffc9c9}
+
+/* responsive */
+@media (max-width:920px){
+  #settings-panel{right:8px;left:8px;width:auto}
+  #settings-gear{right:12px}
+  #topbar-container{top:12px}
+  #settings-panel{top: calc(var(--topbar-gap) + var(--topbar-height) + 8px); width: calc(100% - 24px);}
+}
+
+/* 💉 Inject Syringe Button (matches settings gear) */
+#forceRunBtn {
+  position: fixed;
+  left: 28px;
+  top: calc(var(--topbar-gap) + 14px);
+  z-index: 95;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  border: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 18px 46px var(--panel-elev);
+  backdrop-filter: blur(10px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
+  will-change: transform, filter;
+}
+
+#forceRunBtn img {
+  width: 28px;
+  height: 28px;
+  pointer-events: none;
+  filter: drop-shadow(0 0 6px var(--accent-glow));
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+/* Hover glow + lift */
+#forceRunBtn:hover {
+  transform: scale(1.08) rotate(-3deg);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.6);
+  filter: brightness(1.05);
+}
+#forceRunBtn:hover img {
+  transform: scale(1.12);
+  filter: drop-shadow(0 0 12px var(--accent-glow));
+}
+
+/* Click animation */
+@keyframes syringeClick {
+  0%   { transform: scale(1.05) rotate(-3deg); }
+  30%  { transform: scale(0.9) rotate(3deg); }
+  60%  { transform: scale(1.15) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+</style>
+</head>
+<!-- 💉 Inject Syringe Button -->
+<button id="forceRunBtn" title="Inject Script" aria-label="Inject Script">
+  <img src="https://classroom.page.gd/images/inject.png" alt="Inject">
+</button>
+    
+<body class="theme-frost">
+
+<!-- TOPBAR -->
+<div id="topbar-container" aria-hidden="false">
+  <div id="clock-digital" title="Click to hide/show top controls"><span class="hours-minutes"></span><span class="seconds"></span></div>
+
+  <div id="topbar" role="region" aria-label="Top bar">
+    <div id="tabs" role="tablist">
+      <!-- Home -->
+      <button id="homeTab" class="tab-btn active" data-url="https://learning-math-nu.vercel.app/" title="Home" aria-label="Home" role="tab">
+        <img src="https://classroom.page.gd/images/home.png" class="tab-icon" alt="Home">
+      </button>
+
+      <!-- Duck dropdown anchored under the duck tab -->
+      <div class="dropdown" aria-haspopup="true">
+        <button class="tab-btn tb-btn" aria-expanded="false" title="More" aria-label="More">
+          <img src="https://classroom.page.gd/images/duck.png" alt="Duck">
+        </button>
+        <div class="dropdown-panel" role="menu" aria-hidden="true">
+          <button data-url="https://nullxiety.com/" role="menuitem" title="Nullxiety"><img src="https://www.google.com/s2/favicons?domain=nullxiety.com" alt=""><span style="margin-left:8px">Nullxiety</span></button>
+          <button data-url="https://duck.quackprep.com/" role="menuitem" title="Quackprep"><img src="https://www.google.com/s2/favicons?domain=duck.quackprep.com" alt=""><span style="margin-left:8px">Quackprep</span></button>
+        </div>
+      </div>
+
+      <!-- Apps -->
+      <button id="appsTab" class="tab-btn" data-url="https://nexus-is.onthewifi.com/pages/apps?upd=classroom.google.com/classroom.page.gd" title="Apps" role="tab">
+        <img src="https://classroom.page.gd/images/apps.png" class="tab-icon" alt="Apps">
+      </button>
+
+      <!-- Math -->
+      <button id="mathTab" class="tab-btn" data-url="https://smart-educational-learning-math.vercel.app/" title="Math" role="tab">
+        <img src="https://classroom.page.gd/images/extensions.png" class="tab-icon" alt="Math">
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS GEAR -->
+<button id="settings-gear" aria-label="Open settings" title="Settings"><img src="https://classroom.page.gd/images/data.png" alt="Settings"></button>
+
+<!-- SETTINGS PANEL -->
+<div id="settings-panel" role="dialog" aria-label="Settings panel" aria-hidden="true">
+  <div class="panel-head">
+    <div>
+      <h3 style="margin:0;font-size:16px">Appearance & Script Loader</h3>
+      <div class="small-note">Switch themes, choose accent, run scripts</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+      <label style="display:flex;gap:8px;align-items:center">
+        <div style="font-size:13px;font-weight:700">Theme</div>
+        <select id="themeSelect" style="padding:6px;border-radius:8px;background:rgba(0,0,0,0.08);border:1px solid rgba(255,255,255,0.04);color:var(--text)">
+          <option value="frost">Frost (default)</option>
+          <option value="neon">Cyber Glow</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <!-- Accent presets -->
+  <div style="margin-bottom:10px">
+    <div style="font-weight:700;margin-bottom:6px">Accent (default red)</div>
+    <div class="presets" id="presetList">
+      <div class="swatch" title="Red (default)" data-start="#ff0000" data-mid="#ff3b3b" data-end="#b30000" style="background:linear-gradient(90deg,#ff0000,#ff3b3b)"></div>
+      <div class="swatch" title="Pink" data-start="#ff7ab6" data-mid="#ffb7dd" data-end="#ff83c7" style="background:linear-gradient(90deg,#ff7ab6,#ffb7dd)"></div>
+      <div class="swatch" title="White" data-start="#ffffff" data-mid="#77c8ff" data-end="#f5b8ff" style="background:linear-gradient(90deg,#ffffff,#77c8ff)"></div>
+      <div class="swatch" title="Purple" data-start="#b794ff" data-mid="#c4a3ff" data-end="#8a63ff" style="background:linear-gradient(90deg,#b794ff,#8a63ff)"></div>
+      <div class="swatch" title="Blue" data-start="#77c8ff" data-mid="#59aef7" data-end="#4ea8ff" style="background:linear-gradient(90deg,#77c8ff,#4ea8ff)"></div>
+      <div class="swatch" title="Neon" data-start="#00ffff" data-mid="#ff00ff" data-end="#00ff99" style="background:linear-gradient(90deg,#00ffff,#ff00ff)"></div>
+    </div>
+
+    <div class="custom-row" style="margin-top:8px">
+      <input id="customColor" type="color" value="#ff0000" title="Custom accent color" style="width:48px;height:40px;border-radius:8px;border:none;padding:0">
+      <div class="small-note">Custom sets all gradient stops</div>
+    </div>
+  </div>
+
+  <!-- Script loader (real injector) -->
+  <div style="margin-top:6px;font-weight:700">External Scripts (real injector)</div>
+  <div class="small-note" style="margin-bottom:8px">Paste trusted script URLs (GitHub Pages raw recommended). These will be appended and executed in-page.</div>
+
+  <div class="script-row">
+    <input id="scriptUrl1" type="text" placeholder="https://username.github.io/repo/script1.js" />
+    <button id="load1" class="small-btn">Load</button>
+    <div id="status1" class="small-note" style="padding:6px 10px;border-radius:999px;background:#fff7ed;color:#92400e;margin-left:6px">idle</div>
+  </div>
+  <div class="script-row">
+    <input id="scriptUrl2" type="text" placeholder="https://username.github.io/repo/script2.js" />
+    <button id="load2" class="small-btn">Load</button>
+    <div id="status2" class="small-note" style="padding:6px 10px;border-radius:999px;background:#fff7ed;color:#92400e;margin-left:6px">idle</div>
+  </div>
+  <div class="script-row">
+    <input id="scriptUrl3" type="text" placeholder="https://username.github.io/repo/script3.js" />
+    <button id="load3" class="small-btn">Load</button>
+    <div id="status3" class="small-note" style="padding:6px 10px;border-radius:999px;background:#fff7ed;color:#92400e;margin-left:6px">idle</div>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+    <button id="loadAll" class="small-btn primary">Load All</button>
+    <button id="saveScripts" class="small-btn">Save URLs</button>
+    <button id="clearScripts" class="small-btn">Clear</button>
+    <label style="margin-left:auto;display:flex;align-items:center;gap:8px">
+      <div style="font-size:13px">Auto load</div>
+      <input id="autoSwitch" type="checkbox" class="toggle-input" />
+      <label for="autoSwitch" class="toggle-label" title="Auto load saved scripts"></label>
+    </label>
+  </div>
+
+  <hr style="border:none;border-top:1px solid rgba(255,255,255,0.04);margin:12px 0">
+
+  <div style="font-weight:700;margin-bottom:8px">Force-run JavaScript</div>
+  <div class="small-note" style="margin-bottom:6px">Paste JS here to run inline in the page (full privileges).</div>
+
+  <textarea id="forceArea" placeholder="// Paste JavaScript to execute inline" ></textarea>
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <button id="runInline" class="small-btn primary">Run Inline</button>
+    <input id="forceUrl" type="text" placeholder="https://example.com/script.js" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:var(--text)">
+    <button id="runUrl" class="small-btn">Run URL (in-page)</button>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+    <div style="font-weight:700">Console</div>
+    <div id="log-toolbar" style="display:flex;gap:8px;align-items:center">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="log">Logs</button>
+      <button class="filter-btn" data-filter="warn">Warnings</button>
+      <button class="filter-btn" data-filter="err">Errors</button>
+      <button id="exportLogs">Export Logs</button>
+    </div>
+  </div>
+
+  <div id="logPanel" aria-live="polite" style="margin-top:8px"></div>
+
+  <div style="font-size:12px;color:rgba(255,255,255,0.72);margin-top:10px">Security note: inline scripts run with page privileges — only run code you trust.</div>
+</div>
+
+<!-- MAIN IFRAME (preserved original) -->
+<iframe id="mainIframe" src="https://loading-classroom.page.gd/?i=1"
+  allowfullscreen
+  sandbox="allow-same-origin allow-forms allow-popups allow-modals allow-scripts"
+  allow="fullscreen; geolocation; microphone; camera; clipboard-read; clipboard-write; autoplay; popups"></iframe>
+
+<script>
+    /* 💉 Inject Button Behavior */
+const forceBtn = document.getElementById('forceRunBtn');
+
+if (forceBtn) {
+  forceBtn.addEventListener('click', () => {
+    // play smooth click animation
+    forceBtn.style.animation = 'none';
+    forceBtn.offsetHeight; // restart animation
+    forceBtn.style.animation = 'syringeClick 0.4s cubic-bezier(0.25, 0.8, 0.4, 1)';
+
+    // dynamically load your force-run.js
+    try {
+      const scriptPath = './force-run.js';
+      const s = document.createElement('script');
+      s.src = scriptPath + '?v=' + Date.now();
+      s.onload = () => console.log(`💉 Loaded: ${scriptPath}`);
+      s.onerror = () => console.error(`❌ Failed to load ${scriptPath}`);
+      document.body.appendChild(s);
+    } catch (e) {
+      console.error('Force run error:', e);
+    }
+  });
+}
+
+/* =========================
+   Logging system & console capture
+   ========================= */
+const LOGS = []; // newest first
+const logPanel = document.getElementById('logPanel');
+let currentFilter = 'all';
+
+function pushLog(type, text, source='ui'){
+  const entry = { ts: Date.now(), type, text: String(text), source };
+  LOGS.unshift(entry);
+  renderLogs(currentFilter);
+}
+function renderLogs(filter='all'){
+  logPanel.innerHTML = '';
+  const rows = LOGS.filter(r => filter === 'all' ? true : r.type === filter);
+  if(!rows.length){
+    const e = document.createElement('div'); e.className = 'log-line'; e.style.opacity = 0.6; e.textContent = 'No logs';
+    logPanel.appendChild(e);
+    return;
+  }
+  rows.forEach(r => {
+    const d = document.createElement('div');
+    d.className = 'log-line ' + r.type;
+    d.textContent = `[${new Date(r.ts).toLocaleTimeString()}] [${r.type.toUpperCase()}] (${r.source}) ${r.text}`;
+    logPanel.appendChild(d);
+  });
+}
+
+/* Intercept console */
+(function interceptConsole(){
+  const orig = { log: console.log.bind(console), warn: console.warn.bind(console), error: console.error.bind(console) };
+  console.log = function(...args){ orig.log(...args); pushLog('log', args.map(safeStringify).join(' '), 'parent'); };
+  console.warn = function(...args){ orig.warn(...args); pushLog('warn', args.map(safeStringify).join(' '), 'parent'); };
+  console.error = function(...args){ orig.error(...args); pushLog('err', args.map(safeStringify).join(' '), 'parent'); };
+})();
+function safeStringify(v){ try{ return typeof v === 'object' ? JSON.stringify(v) : String(v) } catch(e){ return String(v) } }
+
+/* Export logs */
+document.getElementById('exportLogs').addEventListener('click', ()=>{
+  const visible = LOGS.filter(l => currentFilter === 'all' ? true : l.type === currentFilter).slice().reverse();
+  const txt = visible.map(l => `[${new Date(l.ts).toLocaleString()}] [${l.type.toUpperCase()}] (${l.source}) ${l.text}`).join('\n');
+  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = `logs-${currentFilter}-${new Date().toISOString().replace(/[:.]/g,'-')}.txt`; a.click();
+  URL.revokeObjectURL(url);
+});
+
+/* Filter buttons */
+document.querySelectorAll('.filter-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    renderLogs(currentFilter);
+  });
+});
+
+/* initial log */
+pushLog('log','UI ready','system');
+
+/* =========================
+   Clock & topbar hide/show
+   ========================= */
+const clockEl = document.getElementById('clock-digital');
+const hm = clockEl.querySelector('.hours-minutes');
+const sec = clockEl.querySelector('.seconds');
+function updateClock(){
+  const n = new Date();
+  let h = n.getHours();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  hm.textContent = `${h}:${String(n.getMinutes()).padStart(2,'0')} ${ampm}`;
+  sec.textContent = `:${String(n.getSeconds()).padStart(2,'0')}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* topbar toggle (clock click) */
+const topbar = document.getElementById('topbar');
+const settingsGear = document.getElementById('settings-gear');
+const settingsPanel = document.getElementById('settings-panel');
+let hidden = false;
+clockEl.addEventListener('click', ()=>{
+  hidden = !hidden;
+  topbar.classList.toggle('topbar-hidden', hidden);
+  if(hidden){
+    settingsGear.style.opacity = '0';
+    settingsPanel.classList.remove('show');
+    settingsPanel.setAttribute('aria-hidden','true');
+  } else {
+    settingsGear.style.opacity = '1';
+  }
+});
+
+/* =========================
+   Tabs & dropdown behavior
+   ========================= */
+const iframe = document.getElementById('mainIframe');
+const tabButtons = Array.from(document.querySelectorAll('#tabs .tab-btn'));
+tabButtons.forEach(btn=>{
+  const url = btn.dataset.url;
+  if(url){
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.dropdown .dropdown-panel').forEach(p=>p.classList.remove('show'));
+      tabButtons.forEach(t=>t.classList.remove('active'));
+      btn.classList.add('active');
+      btn.classList.add('underline-pulse');
+      iframe.style.opacity = '0';
+      setTimeout(()=>{ iframe.src = url; iframe.style.opacity = '1'; }, 360);
+      setTimeout(()=>{ if(!anyLoading()) btn.classList.remove('underline-pulse'); }, 1400);
+    });
+  }
+});
+
+/* dropdown menu */
+document.querySelectorAll('.dropdown').forEach(drop=>{
+  const trigger = drop.querySelector('.tb-btn');
+  const panel = drop.querySelector('.dropdown-panel');
+  trigger.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    // position dropdown relative to the trigger for better alignment
+    const rect = trigger.getBoundingClientRect();
+    panel.style.left = (rect.left - (rect.width*0.08)) + 'px';
+    panel.classList.toggle('show');
+    trigger.setAttribute('aria-expanded', panel.classList.contains('show'));
+  });
+  panel.querySelectorAll('button[data-url]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const url = b.dataset.url;
+      tabButtons.forEach(t=>t.classList.remove('active'));
+      trigger.classList.add('active');
+      trigger.classList.add('underline-pulse');
+      iframe.style.opacity = '0';
+      setTimeout(()=>{ iframe.src = url; iframe.style.opacity = '1'; trigger.classList.remove('underline-pulse'); }, 360);
+      panel.classList.remove('show');
+    });
+  });
+  document.addEventListener('click', (ev)=>{ if(!drop.contains(ev.target)) panel.classList.remove('show'); });
+});
+
+/* =========================
+   Settings interactions & accent/theme management
+   ========================= */
+const presetList = document.getElementById('presetList');
+const customColor = document.getElementById('customColor');
+const themeSelect = document.getElementById('themeSelect');
+
+function applyAccent(start, mid, end){
+  document.documentElement.style.setProperty('--accent-start', start);
+  document.documentElement.style.setProperty('--accent-mid', mid || start);
+  document.documentElement.style.setProperty('--accent-end', end || start);
+  document.documentElement.style.setProperty('--accent-glow', hexToRgba(start, 0.88));
+  localStorage.setItem('accentStops', JSON.stringify([start, mid || start, end || start]));
+  pushLog('log', `Accent set to ${start}`, 'ui');
+}
+function hexToRgba(hex, alpha=1){
+  if(!hex) return `rgba(255,255,255,${alpha})`;
+  let h = hex.replace('#','');
+  if(h.length === 3) h = h.split('').map(c=>c+c).join('');
+  const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+/* swatches */
+presetList.querySelectorAll('.swatch').forEach(s=>{
+  s.addEventListener('click', ()=>{ applyAccent(s.dataset.start, s.dataset.mid, s.dataset.end); customColor.value = s.dataset.start; });
+});
+customColor.addEventListener('input', e=>{ applyAccent(e.target.value, e.target.value, e.target.value); });
+
+/* theme restore & apply */
+(function restoreSettings(){
+  try{
+    const stops = JSON.parse(localStorage.getItem('accentStops') || 'null');
+    if(stops && stops[0]) { applyAccent(stops[0], stops[1], stops[2]); customColor.value = stops[0]; }
+    const th = localStorage.getItem('uiTheme') || 'frost';
+    document.documentElement.classList.remove('theme-frost','theme-neon');
+    if(th === 'neon'){ document.documentElement.classList.add('theme-neon'); themeSelect.value = 'neon'; } else { document.documentElement.classList.add('theme-frost'); themeSelect.value = 'frost'; }
+    const savedUrls = JSON.parse(localStorage.getItem('scriptUrls') || '[]');
+    if(Array.isArray(savedUrls)) for(let i=0;i<3;i++){ if(savedUrls[i]) document.getElementById('scriptUrl'+(i+1)).value = savedUrls[i]; }
+    const auto = localStorage.getItem('scriptAuto');
+    if(auto === '1'){ document.getElementById('autoSwitch').checked = true; }
+  }catch(e){ console.warn(e); }
+})();
+
+themeSelect.addEventListener('change', (e)=>{
+  const v = e.target.value;
+  if(v === 'neon'){ document.documentElement.classList.remove('theme-frost'); document.documentElement.classList.add('theme-neon'); localStorage.setItem('uiTheme','neon'); } else { document.documentElement.classList.remove('theme-neon'); document.documentElement.classList.add('theme-frost'); localStorage.setItem('uiTheme','frost'); }
+});
+
+/* settings panel hot toggles */
+document.getElementById('settings-gear').addEventListener('click', (e)=>{ e.stopPropagation(); settingsPanel.classList.toggle('show'); settingsPanel.setAttribute('aria-hidden', !settingsPanel.classList.contains('show')); });
+document.addEventListener('click', (e)=>{ if(!settingsPanel.contains(e.target) && e.target !== document.getElementById('settings-gear')){ settingsPanel.classList.remove('show'); settingsPanel.setAttribute('aria-hidden','true'); } });
+
+/* =========================
+   Real script injector (3 slots)
+   - inject real <script src> tags in-page
+   - visual status chips
+   - loading pulse on active tab while any script loading
+   ========================= */
+const SLOT_COUNT = 3;
+const statusEls = [document.getElementById('status1'), document.getElementById('status2'), document.getElementById('status3')];
+const urlInputs = [document.getElementById('scriptUrl1'), document.getElementById('scriptUrl2'), document.getElementById('scriptUrl3')];
+const loadBtns = [document.getElementById('load1'), document.getElementById('load2'), document.getElementById('load3')];
+let statuses = new Array(SLOT_COUNT).fill('idle');
+
+function setStatus(i, state){
+  statuses[i] = state;
+  const el = statusEls[i];
+  if(!el) return;
+  el.textContent = state;
+  if(state === 'loaded'){ el.style.background = '#d1fae5'; el.style.color = '#064e3b'; }
+  else if(state === 'loading...'){ el.style.background = '#fff7ed'; el.style.color = '#92400e'; }
+  else if(state === 'failed'){ el.style.background = '#fee2e2'; el.style.color = '#7f1d1d'; }
+  else { el.style.background = '#fff7ed'; el.style.color = '#92400e'; }
+  updatePulse();
+}
+function anyLoading(){ return statuses.some(s=>s==='loading...'); }
+function updatePulse(){ const active = document.querySelector('.tab-btn.active'); if(!active) return; if(anyLoading()) active.classList.add('underline-pulse'); else active.classList.remove('underline-pulse'); }
+
+/* inject external script (real) */
+function injectScript(url, idx){
+  return new Promise((resolve, reject) => {
+    if(!url || !url.trim()){ setStatus(idx,'idle'); return reject(new Error('empty url')); }
+    setStatus(idx,'loading...');
+    try{
+      // remove previous loader for same idx if exists
+      const prev = document.querySelector(`script[data-loader-idx="${idx}"]`);
+      if(prev) prev.remove();
+      const s = document.createElement('script');
+      s.src = url;
+      s.async = true;
+      s.setAttribute('data-loader-idx', idx);
+      s.onload = () => { setStatus(idx,'loaded'); pushLog('log', `Loaded script ${url}`, `slot${idx}`); resolve(url); };
+      s.onerror = (e) => { setStatus(idx,'failed'); pushLog('err', `Failed to load ${url}`, `slot${idx}`); reject(e); };
+      document.body.appendChild(s);
+    }catch(err){
+      setStatus(idx,'failed');
+      reject(err);
+    }
+  });
+}
+
+/* per-slot button wiring */
+loadBtns.forEach((btn, i) => {
+  btn.addEventListener('click', async ()=>{
+    const url = (urlInputs[i].value || '').trim();
+    if(!url){ setStatus(i, 'idle'); return; }
+    try{ await injectScript(url, i); } catch(e){ console.error(e); }
+  });
+});
+
+/* load all sequentially */
+document.getElementById('loadAll').addEventListener('click', async ()=>{
+  for(let i=0;i<SLOT_COUNT;i++){
+    const u = (urlInputs[i].value||'').trim();
+    if(!u){ setStatus(i,'idle'); continue; }
+    setStatus(i,'loading...');
+    try{ await injectScript(u, i); } catch(e){ pushLog('err', `loadAll error: ${e}`, `slot${i}`); setStatus(i,'failed'); }
+  }
+});
+
+/* save/clear urls & auto */
+document.getElementById('saveScripts').addEventListener('click', ()=>{
+  const arr = urlInputs.map(x => x.value.trim());
+  localStorage.setItem('scriptUrls', JSON.stringify(arr));
+  localStorage.setItem('scriptAuto', document.getElementById('autoSwitch').checked ? '1' : '0');
+  pushLog('log','Saved script URLs','ui');
+  alert('Script URLs saved. Enable Auto to load at startup.');
+});
+document.getElementById('clearScripts').addEventListener('click', ()=>{
+  urlInputs.forEach(x => x.value = '');
+  localStorage.removeItem('scriptUrls');
+  localStorage.removeItem('scriptAuto');
+  document.getElementById('autoSwitch').checked = false;
+  statuses = new Array(SLOT_COUNT).fill('idle');
+  for(let i=0;i<SLOT_COUNT;i++) setStatus(i,'idle');
+  pushLog('log','Cleared script URLs','ui');
+});
+
+/* restore saved and auto-load */
+(function restoreAutoLoad(){
+  try{
+    const urls = JSON.parse(localStorage.getItem('scriptUrls') || '[]');
+    if(Array.isArray(urls)) for(let i=0;i<SLOT_COUNT;i++) urlInputs[i].value = urls[i] || '';
+    const auto = localStorage.getItem('scriptAuto');
+    if(auto === '1'){ document.getElementById('autoSwitch').checked = true; setTimeout(()=>document.getElementById('loadAll').click(), 700); }
+  }catch(e){ console.warn(e); }
+})();
+
+/* =========================
+   Force-run inline / Run URL
+   ========================= */
+document.getElementById('runInline').addEventListener('click', ()=>{
+  const code = (document.getElementById('forceArea').value || '').trim();
+  if(!code){ alert('Paste code first'); return; }
+  try{
+    const s = document.createElement('script');
+    s.textContent = `try{ ${code} } catch(e){ console.error('Inline error:', e); }`;
+    document.body.appendChild(s);
+    pushLog('log', 'Executed inline script in parent', 'ui');
+  }catch(e){ pushLog('err', 'Inline error: '+e, 'ui'); }
+});
+
+document.getElementById('runUrl').addEventListener('click', ()=>{
+  const url = (document.getElementById('forceUrl').value || '').trim();
+  if(!url){ alert('Paste URL'); return; }
+  try{
+    const s = document.createElement('script');
+    s.src = url;
+    s.async = true;
+    s.onload = () => pushLog('log', 'Loaded URL in parent: '+url,'ui');
+    s.onerror = () => pushLog('err', 'URL load failed: '+url,'ui');
+    document.body.appendChild(s);
+  }catch(e){ pushLog('err', 'RunURL error: '+e,'ui'); }
+});
+
+/* accessibility: Esc closes settings */
+document.addEventListener('keydown', e=>{ if(e.key === 'Escape'){ settingsPanel.classList.remove('show'); settingsPanel.setAttribute('aria-hidden','true'); } });
+
+/* small interval to update tab pulse state */
+setInterval(()=>{ updatePulse(); }, 400);
+
+/* final ready */
+pushLog('log','Ready','system');
+</script>
+<script src="/js/classes.js"></script>
+</body>
+</html>
